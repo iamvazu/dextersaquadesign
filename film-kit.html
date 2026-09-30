@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dexter's Film Kit</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+<style>
+/* Layout concept: a director's shot list. One column of numbered takes that chain into each other,
+   each take carrying its start frame, its prompt and the check to make before the next take. */
+:root{
+  --abyss:#061311; --deep:#0c201d; --kelp:#1a352f; --pearl:#eef1e8; --mist:#9fb3ac;
+  --aqua:#5fd3e4; --moss:#9ed36a; --gold:#d2b06a;
+  --f-display:"Cormorant Garamond","Iowan Old Style",Georgia,serif;
+  --f-body:"Manrope","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--abyss);color:var(--pearl);margin:0;}
+body{font:400 16px/1.6 var(--f-body);padding-inline:clamp(16px,5vw,56px);-webkit-font-smoothing:antialiased;}
+.wrap{max-width:980px;margin:0 auto;padding-block:clamp(40px,7vw,96px);}
+.eyebrow{font:500 .72rem/1 var(--f-mono);letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin:0;}
+h1{font-family:var(--f-display);font-weight:500;font-size:clamp(2.6rem,7vw,5rem);line-height:.95;margin:18px 0 0;letter-spacing:-.015em;text-wrap:balance;}
+h1 em,h2 em{font-style:italic;color:var(--aqua);}
+h2{font-family:var(--f-display);font-weight:500;font-size:clamp(1.9rem,4vw,2.8rem);line-height:1;margin:0;text-wrap:balance;}
+.lede{font-size:1.1rem;color:color-mix(in srgb,var(--pearl) 82%,var(--mist));max-width:62ch;margin:24px 0 0;}
+section{margin-top:clamp(56px,8vw,96px);}
+.how{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--kelp);border:1px solid var(--kelp);border-radius:14px;overflow:hidden;margin-top:28px;}
+.how div{background:var(--deep);padding:22px;min-width:0;}
+.how b{display:block;font:500 .7rem var(--f-mono);letter-spacing:.2em;color:var(--aqua);text-transform:uppercase;}
+.how p{margin:10px 0 0;color:var(--mist);font-size:.95rem;}
+.how p strong{color:var(--pearl);font-weight:600;}
+.rule{margin-top:22px;padding:18px 20px;border-left:2px solid var(--gold);background:color-mix(in srgb,var(--gold) 7%,transparent);border-radius:0 10px 10px 0;color:color-mix(in srgb,var(--pearl) 85%,var(--mist));}
+.rule strong{color:var(--gold);}
+.take{display:grid;grid-template-columns:120px minmax(0,1fr);gap:clamp(16px,3vw,36px);padding-block:36px;border-top:1px solid var(--kelp);}
+.take:first-of-type{border-top:0;}
+.take .n{font-family:var(--f-display);font-size:4rem;line-height:.8;color:var(--c,var(--aqua));}
+.take .n small{display:block;margin-top:14px;font:500 .64rem var(--f-mono);letter-spacing:.2em;color:var(--mist);text-transform:uppercase;}
+.take h3{font-family:var(--f-display);font-weight:500;font-size:2rem;line-height:1;margin:0;}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+.meta span{font:500 .72rem var(--f-mono);letter-spacing:.06em;padding:6px 10px;border-radius:6px;background:var(--deep);border:1px solid var(--kelp);color:var(--mist);}
+.meta span b{color:var(--pearl);font-weight:500;}
+.prompt{position:relative;margin-top:18px;background:var(--deep);border:1px solid var(--kelp);border-radius:12px;}
+.prompt pre{margin:0;padding:20px 20px 20px;white-space:pre-wrap;word-break:break-word;font:400 .9rem/1.65 var(--f-mono);color:var(--pearl);}
+.prompt pre mark{background:none;color:var(--gold);}
+.prompt .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px 10px 20px;border-bottom:1px solid var(--kelp);font:500 .66rem var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--mist);}
+button{font:600 .8rem var(--f-body);color:var(--abyss);background:var(--pearl);border:0;border-radius:999px;padding:8px 16px;cursor:pointer;transition:background .2s;}
+button:hover{background:var(--aqua);}
+button:focus-visible{outline:2px solid var(--aqua);outline-offset:3px;}
+.check{margin-top:14px;font-size:.95rem;color:var(--mist);}
+.check b{color:var(--moss);font-weight:600;}
+.grab{margin-top:28px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start;}
+.drop{border:1.5px dashed color-mix(in srgb,var(--aqua) 50%,transparent);border-radius:14px;padding:32px 22px;text-align:center;color:var(--mist);cursor:pointer;transition:background .2s;}
+.drop:hover,.drop.over{background:color-mix(in srgb,var(--aqua) 8%,transparent);}
+.drop b{display:block;color:var(--pearl);font-size:1.05rem;margin-bottom:6px;}
+.frames{display:grid;gap:14px;}
+.frames figure{margin:0;background:var(--deep);border:1px solid var(--kelp);border-radius:12px;overflow:hidden;}
+.frames img{display:block;width:100%;height:auto;}
+.frames figcaption{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;font:500 .66rem var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mist);}
+.frames .empty{padding:28px;text-align:center;color:var(--mist);font-size:.92rem;}
+.status{min-height:1.4em;font-size:.9rem;color:var(--moss);margin:10px 0 0;}
+.names{margin-top:24px;overflow-x:auto;border:1px solid var(--kelp);border-radius:12px;}
+table{border-collapse:collapse;width:100%;font-size:.92rem;}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--kelp);white-space:nowrap;}
+th{font:500 .66rem var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--mist);}
+td code{font:500 .85rem var(--f-mono);color:var(--aqua);}
+tr:last-child td{border-bottom:0;}
+@media (max-width:760px){
+  .how{grid-template-columns:1fr 1fr;}
+  .take{grid-template-columns:1fr;gap:12px;}
+  .take .n{font-size:3rem;display:flex;align-items:baseline;gap:14px;}
+  .take .n small{margin-top:0;}
+  .grab{grid-template-columns:1fr;}
+}
+@media (max-width:460px){ .how{grid-template-columns:1fr;} }
+</style>
+
+</head><body>
+<div class="wrap">
+  <p class="eyebrow">Dexter's Aqua Designs · Film kit</p>
+  <h1>Follow the water: <em>eight takes, one flight.</em></h1>
+  <p class="lede">The website plays one continuous camera flight as visitors scroll: from a glowing aquarium in a dark room, through the aquascape, up through a riverbank and a terrarium, out a window to a waterfall, a pond and finally a natural swimming pool. You make it in Google Gemini (Veo 3.1) as eight 8-second clips. Each clip starts on the exact last frame of the one before, so the joins are invisible.</p>
+
+  <section>
+    <p class="eyebrow">How to make it</p>
+    <h2>The workflow</h2>
+    <div class="how">
+      <div><b>1 · Still</b><p>In Gemini, ask for an image and paste the <strong>starting still</strong> prompt below. Pick the best one and save it.</p></div>
+      <div><b>2 · Take 1</b><p>Choose <strong>Video (Veo 3.1)</strong>, attach the still as the starting image, paste Take 1's prompt, 16:9. Download the clip.</p></div>
+      <div><b>3 · Grab the last frame</b><p>Drop the clip into the <strong>frame grabber</strong> at the bottom of this page. It gives you the final frame as a picture.</p></div>
+      <div><b>4 · Chain</b><p>Attach that frame as the starting image for the next take. Repeat through Take 8.</p></div>
+    </div>
+    <p class="rule"><strong>The one rule.</strong> Every take starts from the previous take's real last frame, never from a new still. That is what makes the film feel like one camera. If a take ends on a blurry, spinning or sideways frame, generate it again before moving on, because a bad last frame spoils every take after it.</p>
+    <p class="rule"><strong>If you use Google Flow</strong> (the Veo filmmaking tool in your Google AI plan), you can use <em>Frames to Video</em> for Take 1 and then <em>Extend</em> with each next prompt, which continues from the last frame for you. Download each clip, or the whole joined scene; I can cut a joined scene back into the eight parts.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Before Take 1</p>
+    <h2>The starting still</h2>
+    <div class="prompt" id="still"></div>
+    <p class="check"><b>Check:</b> the aquarium is centred, glowing, and the room is dark and calm. Nothing written anywhere in the picture.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">The shot list</p>
+    <h2>Eight takes</h2>
+    <p class="lede" style="margin-top:14px">Settings for every take: <strong>Veo 3.1</strong>, <strong>16:9</strong>, <strong>8 seconds</strong>, highest quality your plan allows (1080p if offered). Use the same settings for all eight so the look stays consistent. Sound does not matter; the site mutes it.</p>
+    <div id="takes"></div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Between takes</p>
+    <h2>Frame grabber</h2>
+    <p class="lede" style="margin-top:14px">Drop a finished clip here. You get its last frame (to start the next take) and its first frame (the site uses it as a poster). Right-click a frame and choose <em>Copy image</em> to paste it straight into Gemini, or <em>Save image as</em>.</p>
+    <div class="grab">
+      <div>
+        <label class="drop" id="drop" for="file"><b>Drop a clip, or click to choose</b>MP4 from Gemini or Flow</label>
+        <input type="file" id="file" accept="video/*" hidden />
+        <p class="status" id="status" role="status"></p>
+      </div>
+      <div class="frames" id="frames"><div class="empty">Frames appear here.</div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Hand back</p>
+    <h2>Name the clips like this</h2>
+    <p class="lede" style="margin-top:14px">Save them into <strong>Desktop\DAD\website\assets\vid</strong>. The site picks each one up automatically; any scene without a clip keeps its specimen window. Then tell me they're there and I'll optimise them for smooth scrolling.</p>
+    <div class="names"><table>
+      <thead><tr><th>Take</th><th>Desktop (16:9)</th><th>Phone (9:16, optional)</th></tr></thead>
+      <tbody id="names"></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Optional</p>
+    <h2>A phone-native version</h2>
+    <p class="lede" style="margin-top:14px">Phones will play the 16:9 film cropped to the centre, which works because every take keeps its subject centred. For a film composed for phones, make a second chain: regenerate the starting still in <strong>9:16</strong>, then run the same eight prompts with the aspect set to <strong>9:16</strong>, chaining last frames exactly as before. It doubles the generations, so do it after the desktop film is approved.</p>
+  </section>
+</div>
+
+<script>
+const TAIL = 'Photorealistic nature-documentary cinematography, cinema camera, natural soft light, rich emerald greens and clear aqua water, gentle volumetric light rays, shallow depth of field, calm and luxurious mood. Smooth, graceful, slow motion with subtle parallax. No people, no hands, no text, no captions, no logos, no music.';
+const STILL = 'A photorealistic interior photograph at blue hour. A large rimless planted aquarium sits on a low walnut cabinet in a calm, dark, minimalist living room with floor-to-ceiling windows showing a dusky forest. The aquarium glows softly and is the only strong light in the room. Inside it: a lush nature aquascape with grey dragon-stone ridges, twisted driftwood, bright green carpet plants, ferns and mosses, and a school of neon tetras, with soft light rays in the water. The aquarium is centred and fills about 60 percent of the frame, seen straight on at eye level from about four metres away. Cinematic, editorial interior-magazine quality, shallow depth of field, no people, no text, no logos. Wide 16:9 landscape.';
+const TAKES = [
+  { t:'Arrive', c:'#5fd3e4', file:'01-arrive', start:'The starting still', site:'More than an aquarium',
+    p:'Single continuous camera move, no cuts. The camera begins in the dark living room and glides slowly forward toward the glowing aquarium. As it reaches the front glass it passes smoothly through the glass and just below the water surface, entering a lush underwater landscape. <mark>In the final second, settle into a slow, steady forward glide along a green carpeted valley between two grey stone ridges.</mark>',
+    check:'We are fully underwater, looking forward down a green valley. No glass edge or room visible.' },
+  { t:'Planted aquarium', c:'#5fd3e4', file:'02-aquarium', start:'Last frame of Take 1', site:'Underwater landscapes',
+    p:'Single continuous camera move, no cuts. <mark>Continue the same slow, steady forward glide.</mark> The camera travels low through a lush planted aquascape: grey dragon-stone ridges, emerald carpet plants, ferns and moss on driftwood, cherry shrimp grazing on stones, a school of neon tetras parting around the lens, sunbeams rippling through the water. Midway, sweep in a gentle half-arc past a tall stone peak, keeping it centred. <mark>In the final second, settle into a slow, steady forward glide toward a dark tunnel formed by an arch of twisted driftwood roots.</mark>',
+    check:'The driftwood arch is centred ahead, camera level and calm.' },
+  { t:'Biotope', c:'#e7a85a', file:'03-biotope', start:'Last frame of Take 2', site:'Recreating nature',
+    p:'Single continuous camera move, no cuts. <mark>Continue the same slow, steady forward glide.</mark> The camera passes through the driftwood root arch and the water gradually turns a warm, clear tea-amber as it enters a South American blackwater forest stream: tangled submerged roots, a floor of brown fallen leaves and fine sand, shafts of golden sunlight through tannin-stained water, a shimmering school of cardinal tetras. <mark>In the final second, settle into a slow, steady forward glide rising toward the bright rippling water surface, where ferns hang over the bank.</mark>',
+    check:'The water surface is close above and ahead, glowing.' },
+  { t:'Paludarium', c:'#9ed36a', file:'04-paludarium', start:'Last frame of Take 3', site:'Where land meets water',
+    p:'Single continuous camera move, no cuts. <mark>Continue the same slow, steady forward glide.</mark> The camera rises and breaks through the water surface into a half-underwater, half-above-water split view, then emerges onto a misty rainforest riverbank: moss-covered rocks, ferns, a small trickling waterfall, emergent plants, droplets and fine mist in soft green light. <mark>In the final second, settle into a slow, steady forward glide into the ferns, toward a warm golden glow between the leaves.</mark>',
+    check:'We are above water now, ferns close around, warm glow ahead.' },
+  { t:'Terrarium', c:'#d2b06a', file:'05-terrarium', start:'Last frame of Take 4', site:'A miniature world inside glass',
+    p:'Single continuous camera move, no cuts. <mark>Continue the same slow, steady forward glide.</mark> The camera moves through the fern leaves into a tiny forest of cushion moss, pebbles, miniature ferns and a small piece of wood. Midway, the camera eases up and back in a gentle arc, revealing that this whole forest is growing inside a glass sphere terrarium on a wooden table in a warm, softly lit room. Then it continues forward past the terrarium toward a bright open window onto a green garden. <mark>In the final second, settle into a slow, steady forward glide toward the open window.</mark>',
+    check:'The open window is centred ahead, bright garden beyond.' },
+  { t:'Waterfall & stream', c:'#7fd6c2', file:'06-waterfall', start:'Last frame of Take 5', site:'Bring the sound of nature home',
+    p:'Single continuous camera move, no cuts. <mark>Continue the same slow, steady forward glide.</mark> The camera flies out through the open window into a lush garden in soft morning light and approaches a natural stone waterfall cascading over layered boulders, framed by ferns, grasses and flowering plants, the falling water sparkling. Midway, rise gently alongside the falls, then follow the stream as it winds downhill between mossy rocks. <mark>In the final second, settle into a slow, steady forward glide low over the stream toward a wide, calm pond ahead.</mark>',
+    check:'Low over moving water, the pond opening up ahead.' },
+  { t:'Pond', c:'#6fcf97', file:'07-pond', start:'Last frame of Take 6', site:'Nature on a larger scale',
+    p:'Single continuous camera move, no cuts. <mark>Continue the same slow, steady forward glide.</mark> The camera skims low out across a clear, natural ecosystem pond: lily pads and water-lily flowers, reeds and irises along the edges, orange and white koi gliding beneath the clear surface, smooth river rocks and gravel visible in the shallows, dragonflies and gentle ripples. <mark>In the final second, settle into a slow, steady forward glide toward a natural stone edge where the pond flows into a larger turquoise pool.</mark>',
+    check:'Stone edge ahead with turquoise water beyond.' },
+  { t:'Natural swimming pool', c:'#f0c27b', file:'08-pool', start:'Last frame of Take 7', site:'Your own piece of nature',
+    p:'Single continuous camera move, no cuts. <mark>Continue the same slow, steady forward glide.</mark> The camera glides over a planted regeneration zone of reeds and water plants and out across a natural swimming pool with crystal-clear turquoise water, natural stone edges, stepping stones and a warm wooden deck with a pergola, in golden-hour light. Then the camera rises slowly in a wide, graceful crane-up, revealing the whole garden as one connected living landscape: pool, planted regeneration zone, pond and waterfall, glowing at sunset. End on a calm, still, wide aerial view.',
+    check:'This is the finale. Any calm, beautiful ending works.' }
+];
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const plain = html => html.replace(/<[^>]+>/g,'');
+function block(label, html){
+  const d = document.createElement('div'); d.className = 'prompt';
+  d.innerHTML = `<div class="bar"><span>${label}</span><button type="button">Copy prompt</button></div><pre>${html}</pre>`;
+  const btn = d.querySelector('button'), text = plain(html);
+  btn.addEventListener('click', () => {
+    const ok = () => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy prompt', 1600); };
+    const sel = () => { const r = document.createRange(); r.selectNodeContents(d.querySelector('pre')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = 'Selected, press Ctrl+C'; setTimeout(() => btn.textContent = 'Copy prompt', 2400); };
+    try { navigator.clipboard.writeText(text).then(ok, sel); } catch(e) { sel(); }
+  });
+  return d;
+}
+document.getElementById('still').replaceWith(Object.assign(block('Gemini image prompt · 16:9', esc(STILL)), {id:'still'}));
+const host = document.getElementById('takes'), names = document.getElementById('names');
+TAKES.forEach((k, i) => {
+  const n = String(i + 1).padStart(2, '0');
+  const el = document.createElement('article'); el.className = 'take'; el.style.setProperty('--c', k.c);
+  el.innerHTML = `<div class="n">${n}<small>${k.t}</small></div><div><h3>${k.site}</h3>
+    <div class="meta"><span>Starting image: <b>${k.start}</b></span><span>Save as: <b>${k.file}.mp4</b></span></div></div>`;
+  const right = el.children[1];
+  right.appendChild(block('Veo prompt · 16:9 · 8 s', k.p + '\n\n' + esc(TAIL)));
+  const c = document.createElement('p'); c.className = 'check'; c.innerHTML = `<b>Last frame should show:</b> ${k.check}`; right.appendChild(c);
+  host.appendChild(el);
+  names.insertAdjacentHTML('beforeend', `<tr><td>${n} · ${k.t}</td><td><code>${k.file}.mp4</code></td><td><code>${k.file}-m.mp4</code></td></tr>`);
+});
+
+// ---- frame grabber ----
+const framed = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+const drop = document.getElementById('drop'), file = document.getElementById('file'), frames = document.getElementById('frames'), status = document.getElementById('status');
+['dragenter','dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', ev => { const f = ev.dataTransfer.files[0]; if (f) grab(f); });
+file.addEventListener('change', () => { if (file.files[0]) grab(file.files[0]); });
+function snap(v){ const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext('2d').drawImage(v, 0, 0); return c.toDataURL('image/png'); }
+function seek(v, t){ return new Promise(r => { v.addEventListener('seeked', r, { once:true }); v.currentTime = t; }); }
+async function grab(f){
+  status.style.color = 'var(--mist)'; status.textContent = 'Reading ' + f.name + '…';
+  const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto';
+  v.src = URL.createObjectURL(f);
+  try {
+    await new Promise((res, rej) => { v.onloadeddata = res; v.onerror = () => rej(new Error('This file could not be read as a video. Try the MP4 exactly as Gemini downloaded it.')); });
+    await seek(v, 0.001); const first = snap(v);
+    await seek(v, Math.max(0, v.duration - 0.04)); const last = snap(v);
+    const base = f.name.replace(/\.[^.]+$/, '');
+    frames.innerHTML = '';
+    [['Last frame · start of the next take', last, base + '-last.png'], ['First frame · poster', first, base + '-first.png']].forEach(([cap, src, name]) => {
+      const fig = document.createElement('figure');
+      fig.innerHTML = `<img alt="${cap}" src="${src}"><figcaption><span>${cap}</span>${framed ? '' : `<a href="${src}" download="${name}"><button type="button" tabindex="-1">Save</button></a>`}</figcaption>`;
+      frames.appendChild(fig);
+    });
+    status.style.color = 'var(--moss)';
+    status.textContent = `${v.videoWidth}×${v.videoHeight}, ${v.duration.toFixed(1)} s. Right-click the frame and choose Save image as or Copy image.`;
+  } catch (e) { status.style.color = 'var(--gold)'; status.textContent = e.message; }
+}
+</script>
+
+</body></html>
