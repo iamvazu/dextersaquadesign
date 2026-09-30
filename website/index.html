@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<!--HEAD-->
+<title>Dexter's Aqua Designs</title>
+<meta name="description" content="Aquascapes, paludariums, terrariums, biotopes, self-sustaining ponds, waterfalls and natural swimming pools by Dexter Ross. Scroll to follow the water." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+<style>
+/* Layout concept: a single camera dive that follows water from a glowing tank to a garden pool,
+   then surfaces into a calm, editorial "field notes" page. Dark water is the ground; light is the accent. */
+:root{
+  --abyss:#061311;      /* page ground, the deepest water */
+  --deep:#0b1f1c;       /* raised surfaces */
+  --kelp:#16312b;       /* hairlines, card fills */
+  --pearl:#eef1e8;      /* primary ink */
+  --mist:#9fb3ac;       /* secondary ink */
+  --aqua:#5fd3e4;       /* the logo's cyan: primary accent */
+  --moss:#9ed36a;       /* living green */
+  --gold:#d2b06a;       /* warm light, labels */
+  --f-display:"Cormorant Garamond","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --f-body:"Manrope","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,Menlo,monospace;
+  --gutter:clamp(18px,5vw,64px);
+  color-scheme:dark;
+}
+:root,.sw-root{
+  --sw-bg:var(--abyss); --sw-ink:var(--pearl); --sw-ink-soft:var(--mist); --sw-accent:var(--aqua);
+  --sw-font-display:var(--f-display); --sw-font-body:var(--f-body);
+}
+html,body{background:var(--abyss);color:var(--pearl);margin:0;}
+body{font-family:var(--f-body);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+::selection{background:var(--aqua);color:var(--abyss);}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--aqua);outline-offset:3px;border-radius:6px;}
+
+/* ---------- living backdrop (WebGL water + particles) ---------- */
+#aq-sky{position:fixed;inset:0;z-index:0;pointer-events:none;}
+#aq-sky canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+#aq-motes{mix-blend-mode:screen;}
+.sw-sky{display:none;}                  /* the engine's default atmosphere is replaced by ours */
+
+/* ---------- engine chrome, re-dressed for deep water & sleek pill nav ---------- */
+.sw-topbar{padding:calc(clamp(14px,2vw,24px) + env(safe-area-inset-top,0px)) clamp(20px,4vw,56px) clamp(14px,2vw,24px);display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:50;}
+.sw-topbar::before{content:"";position:absolute;inset:0 0 -30px;background:linear-gradient(180deg,color-mix(in srgb,var(--abyss) 80%,transparent),transparent);z-index:-1;pointer-events:none;}
+.aq-after .sw-topbar{background:color-mix(in srgb,var(--abyss) 82%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+.sw-topbar{transition:background .4s;}
+
+/* ---------- brand logo & name ---------- */
+.sw-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--pearl);flex:none;}
+.sw-brand__mark{width:36px;height:36px;border-radius:50%;background:url(assets/img/logo.webp) center/cover no-repeat;border:1.5px solid rgba(255,255,255,0.3);box-shadow:0 0 12px rgba(95,211,228,0.35);flex:none;}
+.sw-brand__name{font-family:var(--f-body);font-weight:700;font-size:1.15rem;letter-spacing:-.015em;color:var(--pearl);white-space:nowrap;}
+.sw-brand__name small{display:none;}
+
+/* Center floating pill nav bar (matching screenshot) */
+.sw-nav{display:flex;align-items:center;gap:3px;padding:4px 6px;background:rgba(255,255,255,0.12);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,0.18);border-radius:999px;box-shadow:0 8px 32px rgba(0,0,0,0.25),inset 0 1px 1px rgba(255,255,255,0.15);}
+.sw-nav__item{font-family:var(--f-body);font-size:.82rem;font-weight:500;letter-spacing:.01em;color:color-mix(in srgb,var(--pearl) 75%,var(--mist));padding:6px 14px;border-radius:999px;border:0;background:transparent;cursor:pointer;transition:all .22s cubic-bezier(0.16,1,0.3,1);white-space:nowrap;}
+.sw-nav__item:hover{color:#fff;background:rgba(255,255,255,0.08);}
+.sw-nav__item.is-active{background:#8fae8b;color:#0b1f1c;font-weight:700;box-shadow:0 2px 10px rgba(143,174,139,0.4);}
+
+/* Right controls */
+.aq-top-right{display:flex;align-items:center;gap:12px;flex:none;}
+.aq-links{display:none;}
+.aq-sound{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--pearl);display:grid;place-items:center;padding:0;cursor:pointer;transition:all .25s cubic-bezier(0.16,1,0.3,1);flex:none;}
+.aq-sound:hover{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.35);transform:scale(1.05);}
+.aq-sound .icon-sound-on{display:none;}
+.aq-sound .icon-sound-off{display:block;opacity:.75;}
+.aq-sound[aria-pressed="true"]{background:#8fae8b;color:#0b1f1c;border-color:#8fae8b;box-shadow:0 0 14px rgba(143,174,139,0.45);}
+.aq-sound[aria-pressed="true"] .icon-sound-off{display:none;}
+.aq-sound[aria-pressed="true"] .icon-sound-on{display:block;opacity:1;}
+
+.sw-topcta{font-family:var(--f-body);font-weight:700;font-size:.86rem;letter-spacing:.01em;background:#1b1924;color:#ffffff;border:1px solid rgba(255,255,255,0.22);padding:8px 22px;border-radius:999px;text-decoration:none;box-shadow:0 4px 16px rgba(0,0,0,0.35);transition:all .25s cubic-bezier(0.16,1,0.3,1);white-space:nowrap;}
+.sw-topcta:hover{background:#ffffff;color:#0c0b11;transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,255,255,0.25);}
+.sw-scrollbar{height:2px;background:color-mix(in srgb,var(--pearl) 6%,transparent);}
+.sw-scrollbar span{background:linear-gradient(90deg,var(--aqua),var(--sw-accent));box-shadow:0 0 12px var(--sw-accent);}
+
+@media (min-width:861px){
+  .sw-copylayer::before{width:min(62vw,860px);background:linear-gradient(90deg,color-mix(in srgb,var(--abyss) 88%,transparent) 0%,color-mix(in srgb,var(--abyss) 60%,transparent) 40%,transparent 100%);}
+  .sw-copy{width:min(42vw,520px);}
+}
+.sw-copy__num{font-family:var(--f-mono);color:color-mix(in srgb,var(--mist) 80%,var(--pearl));letter-spacing:.2em;font-size:.76rem;}
+.sw-copy__eyebrow{font-family:var(--f-mono);font-weight:600;font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:#8fae8b;margin-top:18px;}
+.sw-copy__title{font-family:var(--f-body);font-weight:700;font-size:clamp(2.4rem,4.8vw,4.2rem);line-height:1.02;letter-spacing:-.02em;text-wrap:balance;text-shadow:0 4px 40px color-mix(in srgb,var(--abyss) 80%,transparent);margin:14px 0 0;}
+.sw-copy__title em{font-style:normal;color:#8fae8b;}
+.sw-copy__body{color:color-mix(in srgb,var(--pearl) 88%,var(--mist));font-size:clamp(1rem,1.2vw,1.14rem);line-height:1.65;max-width:38ch;margin-top:16px;}
+.sw-copy__tags li{color:var(--pearl);background:color-mix(in srgb,var(--sw-accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--sw-accent) 40%,transparent);font-weight:500;font-size:.78rem;letter-spacing:.02em;backdrop-filter:blur(8px);}
+.sw-btn{font-weight:700;letter-spacing:.02em;}
+.sw-btn--primary{background:var(--sw-accent);color:var(--abyss);box-shadow:0 10px 30px color-mix(in srgb,var(--sw-accent) 35%,transparent);}
+.sw-btn--ghost{color:var(--pearl);border-color:color-mix(in srgb,var(--pearl) 30%,transparent);}
+
+/* Right side route tracker */
+.sw-route{position:fixed;right:clamp(16px,2.6vw,36px);top:50%;z-index:40;transform:translateY(-50%);display:flex;flex-direction:column;gap:20px;padding:16px 8px;}
+.sw-route::before{content:"";position:absolute;left:50%;top:14px;bottom:14px;width:1.5px;transform:translateX(-50%);background:rgba(255,255,255,0.2);}
+.sw-route__dot{position:relative;border:0;background:transparent;cursor:pointer;width:14px;height:14px;display:grid;place-items:center;padding:0;}
+.sw-route__dot i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.35);transition:all .25s ease;}
+.sw-route__dot:hover i{background:#8fae8b;transform:scale(1.3);}
+.sw-route__dot.is-active i{width:8px;height:8px;background:#8fae8b;transform:scale(1.3);box-shadow:0 0 10px #8fae8b;}
+.sw-route__label{position:absolute;right:22px;top:50%;transform:translateY(-50%) translateX(6px);white-space:nowrap;font-family:var(--f-body);font-size:.78rem;font-weight:600;color:#121816;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:4px 12px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;box-shadow:0 4px 16px rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.6);}
+.sw-route__dot:hover .sw-route__label,.sw-route__dot.is-active .sw-route__label{opacity:1;transform:translateY(-50%) translateX(0);}
+.sw-hint{font-family:var(--f-mono);color:var(--mist);letter-spacing:.3em;}
+.sw-hint i{border-color:color-mix(in srgb,var(--pearl) 35%,transparent);}
+
+/* ---------- specimen window (hidden so full background shines through) ---------- */
+#aq-portals{display:none !important;}
+
+/* ---------- the specimen window (shown until a scene's film clip exists) ---------- */
+#aq-portals{position:fixed;inset:0;z-index:15;pointer-events:none;}
+.aq-portal{position:absolute;left:67%;top:50%;width:var(--w,min(36vw,520px));opacity:0;transform:translate(-50%,-50%);will-change:transform,opacity,filter;}
+.aq-portal__glass{position:relative;border-radius:6px;overflow:hidden;aspect-ratio:var(--ar,16/10);max-width:100%;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--pearl) 22%,transparent),0 40px 90px -20px #000,0 0 120px -30px var(--glow,var(--aqua));}
+.aq-portal__glass img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(var(--kb,1.05));}
+.aq-portal__glass::before{content:"";position:absolute;inset:0;z-index:2;background:linear-gradient(115deg,color-mix(in srgb,var(--pearl) 18%,transparent) 0%,transparent 28%,transparent 70%,color-mix(in srgb,var(--pearl) 7%,transparent) 100%);}
+.aq-portal__glass::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;z-index:3;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--pearl) 80%,transparent),transparent);}
+.aq-portal__reflect{height:70px;margin-top:2px;border-radius:4px;overflow:hidden;opacity:.28;transform:scaleY(-1);
+  -webkit-mask-image:linear-gradient(0deg,#000,transparent 80%);mask-image:linear-gradient(0deg,#000,transparent 80%);filter:blur(3px);}
+.aq-portal__reflect img{width:100%;height:auto;display:block;transform:translateY(0);}
+.aq-portal__cap{display:flex;justify-content:space-between;gap:12px;margin-top:-54px;padding:0 2px;font:400 .68rem/1.4 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mist);}
+.aq-portal__cap b{color:var(--glow,var(--aqua));font-weight:500;}
+.aq-portal--logo{--w:min(30vw,380px);}
+.aq-portal--logo .aq-logo{position:relative;aspect-ratio:1;border-radius:50%;}
+.aq-portal--logo .aq-logo img{width:100%;height:100%;display:block;border-radius:50%;box-shadow:0 0 0 1px color-mix(in srgb,var(--aqua) 50%,transparent),0 30px 80px -10px #000,0 0 140px -10px color-mix(in srgb,var(--aqua) 45%,transparent);}
+.aq-logo::before{content:"";position:absolute;inset:-18px;border-radius:50%;border:1px dashed color-mix(in srgb,var(--aqua) 35%,transparent);animation:aq-spin 60s linear infinite;}
+.aq-logo::after{content:"";position:absolute;inset:-36px;border-radius:50%;border:1px solid color-mix(in srgb,var(--pearl) 8%,transparent);}
+@keyframes aq-spin{to{transform:rotate(360deg)}}
+
+/* ---------- instrument readout ---------- */
+#aq-hud{position:fixed;right:calc(var(--gutter) + 34px);bottom:calc(26px + env(safe-area-inset-bottom,0px));justify-content:flex-end;z-index:30;pointer-events:none;font:400 .68rem/1.5 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mist);display:flex;gap:18px;align-items:center;transition:opacity .4s;}
+#aq-hud .dot{width:7px;height:7px;border-radius:50%;background:var(--sw-accent,var(--aqua));box-shadow:0 0 10px var(--sw-accent,var(--aqua));animation:aq-pulse 2.4s ease-in-out infinite;}
+#aq-hud b{color:var(--pearl);font-weight:500;}
+#aq-hud span+span::before{content:"·";margin-right:18px;color:var(--kelp);}
+@keyframes aq-pulse{50%{opacity:.35}}
+
+/* ---------- after the dive: field notes ---------- */
+.after{position:relative;z-index:45;background:var(--abyss);padding-inline:var(--gutter);}
+.after::before{content:"";position:absolute;left:0;right:0;top:-40vh;height:40vh;background:linear-gradient(180deg,transparent,var(--abyss));pointer-events:none;}
+.wrap{max-width:1240px;margin:0 auto;}
+.band{padding-block:clamp(80px,12vw,160px);border-top:1px solid color-mix(in srgb,var(--pearl) 8%,transparent);}
+.band:first-child{border-top:0;}
+.eyebrow{font:500 .72rem/1 var(--f-mono);letter-spacing:.28em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:14px;}
+.eyebrow::before{content:"";width:28px;height:1px;background:currentColor;}
+.h2{font-family:var(--f-display);font-weight:500;font-size:clamp(2.4rem,5.6vw,4.8rem);line-height:.98;letter-spacing:-.015em;margin:22px 0 0;text-wrap:balance;max-width:16ch;}
+.h2 em{font-style:italic;color:var(--aqua);}
+.lede{font-size:clamp(1.02rem,1.3vw,1.2rem);line-height:1.7;color:color-mix(in srgb,var(--pearl) 80%,var(--mist));max-width:58ch;margin:28px 0 0;}
+
+.idea{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(40px,6vw,100px);align-items:end;}
+.idea blockquote{margin:0;font-family:var(--f-display);font-style:italic;font-size:clamp(1.8rem,3.4vw,2.9rem);line-height:1.15;color:var(--pearl);}
+.idea blockquote span{color:var(--moss);}
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:clamp(56px,7vw,96px);border-top:1px solid color-mix(in srgb,var(--pearl) 12%,transparent);}
+.pillar{padding:28px 28px 0 0;min-width:0;}
+.pillar+.pillar{padding-left:28px;border-left:1px solid color-mix(in srgb,var(--pearl) 12%,transparent);}
+.pillar h3{font:500 .78rem/1 var(--f-mono);letter-spacing:.24em;text-transform:uppercase;margin:0;color:var(--c);}
+.pillar p{font-family:var(--f-display);font-size:1.6rem;line-height:1.2;margin:16px 0 0;color:var(--pearl);}
+
+.eco{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(40px,6vw,90px);align-items:center;margin-top:clamp(40px,6vw,72px);}
+.eco svg{width:100%;max-width:560px;height:auto;display:block;margin:0 auto;overflow:visible;}
+.eco .ring{fill:none;stroke:color-mix(in srgb,var(--aqua) 50%,transparent);stroke-width:1.2;stroke-dasharray:3 9;animation:aq-flow 30s linear infinite;}
+.eco .ring2{fill:none;stroke:color-mix(in srgb,var(--pearl) 8%,transparent);stroke-width:1;}
+@keyframes aq-flow{to{stroke-dashoffset:-600}}
+.eco .node circle{fill:var(--deep);stroke:color-mix(in srgb,var(--pearl) 20%,transparent);stroke-width:1;transition:fill .3s,stroke .3s;}
+.eco .node text{fill:var(--pearl);font:500 11px var(--f-mono);letter-spacing:.14em;text-anchor:middle;text-transform:uppercase;}
+.eco .node.is-on circle{fill:color-mix(in srgb,var(--nc) 22%,var(--deep));stroke:var(--nc);}
+.eco .core{font-family:var(--f-display);font-style:italic;font-size:44px;fill:var(--pearl);text-anchor:middle;}
+.eco .core-sub{font:400 10px var(--f-mono);letter-spacing:.3em;fill:var(--mist);text-anchor:middle;}
+.eco ul{list-style:none;margin:0;padding:0;display:grid;gap:2px;}
+.eco li{display:grid;grid-template-columns:150px 1fr;gap:18px;padding:18px 14px;border-radius:10px;cursor:default;transition:background .25s;min-width:0;}
+.eco li:hover,.eco li:focus-visible,.eco li.is-on{background:color-mix(in srgb,var(--pearl) 5%,transparent);}
+.eco li b{font:500 .74rem/1.6 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--nc);}
+.eco li span{color:var(--mist);line-height:1.6;}
+.note{margin-top:40px;font-family:var(--f-display);font-style:italic;font-size:1.35rem;color:var(--gold);}
+
+.process{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));margin-top:clamp(48px,6vw,80px);position:relative;}
+.process::before{content:"";position:absolute;left:0;right:0;top:15px;height:1px;background:linear-gradient(90deg,var(--aqua),var(--moss),var(--gold));opacity:.5;}
+.step{padding-right:22px;min-width:0;}
+.step .n{display:inline-grid;place-items:center;width:31px;height:31px;border-radius:50%;background:var(--abyss);border:1px solid color-mix(in srgb,var(--aqua) 60%,transparent);font:500 .7rem var(--f-mono);color:var(--aqua);position:relative;}
+.step h3{font-family:var(--f-display);font-weight:500;font-size:1.9rem;margin:26px 0 0;}
+.step p{color:var(--mist);line-height:1.6;margin:10px 0 0;font-size:.95rem;}
+
+.marquee{overflow:hidden;padding-block:clamp(40px,6vw,70px);border-top:1px solid color-mix(in srgb,var(--pearl) 8%,transparent);border-bottom:1px solid color-mix(in srgb,var(--pearl) 8%,transparent);margin-inline:calc(var(--gutter) * -1);}
+.marquee__row{display:flex;gap:48px;width:max-content;animation:aq-marq 60s linear infinite;font-family:var(--f-display);font-style:italic;font-size:clamp(2.4rem,6vw,5rem);line-height:1;white-space:nowrap;}
+.marquee__row span:nth-child(odd){color:transparent;-webkit-text-stroke:1px color-mix(in srgb,var(--pearl) 45%,transparent);}
+.marquee__row span:nth-child(even){color:var(--pearl);}
+.marquee__row i{font-style:normal;color:var(--aqua);font-size:.5em;align-self:center;}
+@keyframes aq-marq{to{transform:translateX(-50%)}}
+
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,6vw,100px);align-items:start;}
+.card{display:flex;gap:20px;align-items:center;margin-top:44px;}
+.card img{width:84px;height:84px;border-radius:50%;box-shadow:0 0 0 1px color-mix(in srgb,var(--aqua) 40%,transparent),0 0 40px -6px color-mix(in srgb,var(--aqua) 40%,transparent);}
+.card b{display:block;font-family:var(--f-display);font-size:1.8rem;font-weight:600;}
+.card span{font:400 .72rem var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--aqua);}
+.lines{margin-top:36px;display:grid;gap:0;border-top:1px solid color-mix(in srgb,var(--pearl) 10%,transparent);}
+.line{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0;border-bottom:1px solid color-mix(in srgb,var(--pearl) 10%,transparent);min-width:0;}
+.line small{font:400 .66rem var(--f-mono);letter-spacing:.24em;text-transform:uppercase;color:var(--mist);display:block;margin-bottom:6px;}
+.line a{font-size:clamp(1.05rem,1.6vw,1.3rem);font-weight:600;text-decoration:none;overflow-wrap:anywhere;}
+.line a:hover{color:var(--aqua);}
+.copy{font:500 .7rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mist);background:transparent;border:1px solid color-mix(in srgb,var(--pearl) 18%,transparent);padding:8px 12px;border-radius:999px;cursor:pointer;flex:none;}
+.copy:hover{color:var(--pearl);border-color:var(--aqua);}
+form{display:grid;gap:18px;background:var(--deep);border:1px solid color-mix(in srgb,var(--pearl) 8%,transparent);border-radius:18px;padding:clamp(22px,3vw,40px);}
+form h3{margin:0;font-family:var(--f-display);font-weight:500;font-size:2rem;}
+label{display:grid;gap:8px;font:500 .66rem var(--f-mono);letter-spacing:.22em;text-transform:uppercase;color:var(--mist);}
+input,select,textarea{font:500 1rem var(--f-body);color:var(--pearl);background:var(--abyss);border:1px solid color-mix(in srgb,var(--pearl) 14%,transparent);border-radius:10px;padding:14px 16px;width:100%;box-sizing:border-box;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--aqua);box-shadow:0 0 0 3px color-mix(in srgb,var(--aqua) 20%,transparent);}
+textarea{min-height:120px;resize:vertical;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chips label{display:block;letter-spacing:0;text-transform:none;font:500 .88rem var(--f-body);}
+.chips input{position:absolute;opacity:0;width:1px;height:1px;}
+.chips span{display:inline-block;padding:9px 14px;border-radius:999px;border:1px solid color-mix(in srgb,var(--pearl) 16%,transparent);color:var(--mist);cursor:pointer;transition:all .2s;}
+.chips input:checked+span{background:var(--aqua);border-color:var(--aqua);color:var(--abyss);}
+.chips input:focus-visible+span{outline:2px solid var(--aqua);outline-offset:2px;}
+.send{font:700 1rem var(--f-body);background:var(--pearl);color:var(--abyss);border:0;border-radius:999px;padding:16px 26px;cursor:pointer;justify-self:start;transition:background .25s,transform .25s;}
+.send:hover{background:var(--aqua);transform:translateY(-2px);}
+.formnote{font-size:.9rem;color:var(--moss);min-height:1.4em;margin:0;}
+footer{padding-block:48px calc(48px + env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:center;font:400 .7rem var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:var(--mist);border-top:1px solid color-mix(in srgb,var(--pearl) 8%,transparent);}
+footer .f-brand{display:flex;gap:12px;align-items:center;color:var(--pearl);}
+footer img{width:32px;height:32px;border-radius:50%;}
+
+@media (max-width:980px){
+  .idea,.eco,.contact{grid-template-columns:1fr;}
+  .process{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:48px;}
+  .process::before{display:none;}
+  .aq-links a{display:none;}
+}
+@media (max-width:860px){
+  .aq-portal{left:50%;--w:min(74vw,380px) !important;}
+  .aq-portal--logo{--w:min(52vw,260px) !important;}
+  .aq-portal__reflect{display:none;}
+  .aq-portal__cap{margin-top:10px;}
+  #aq-hud{display:none;}
+  .sw-copy{width:auto;}
+  .sw-copy__title{font-size:clamp(2.3rem,10vw,3.2rem);}
+  .sw-copy__body{font-size:.98rem;line-height:1.55;}
+  .sw-copy__tags{margin-top:16px;} .sw-copy__tags li{padding:6px 12px;}
+  .sw-copy__eyebrow{margin-top:12px;}
+  .aq-portal{top:25%;}
+  .sw-hint span{display:none;}
+  .sw-brand__name{font-size:1.1rem;}
+  .sw-topcta{display:none;}
+}
+@media (max-width:620px){
+  .pillars{grid-template-columns:1fr;}
+  .pillar,.pillar+.pillar{padding:24px 0;border-left:0;border-bottom:1px solid color-mix(in srgb,var(--pearl) 12%,transparent);}
+  .process{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .eco li{grid-template-columns:1fr;gap:6px;}
+  .sw-brand__name small{display:none;}
+}
+@media (prefers-reduced-motion:reduce){
+  .marquee__row,.eco .ring,.aq-logo::before,#aq-hud .dot{animation:none;}
+}
+</style>
+<!--/HEAD-->
+</head>
+<body>
+<!--BODY-->
+<div id="top"></div>
+<div id="aq-sky" aria-hidden="true"><canvas id="aq-water"></canvas><canvas id="aq-motes"></canvas></div>
+<div id="aq-portals" aria-hidden="true"></div>
+<div id="aq-hud" aria-live="off"></div>
+<div id="world"></div>
+
+<main class="after" id="studio">
+  <div class="wrap">
+    <section class="band" id="idea">
+      <div class="idea">
+        <div>
+          <p class="eyebrow">The idea</p>
+          <h2 class="h2">Build nature. <em>Don't just decorate it.</em></h2>
+          <p class="lede">At Dexter's Aqua Designs we create natural environments that bring the beauty, movement and balance of nature into homes, offices, resorts, restaurants and outdoor spaces. Every project is designed around plants, water, rock, wood, microorganisms and natural processes, so it looks beautiful while working as a living environment.</p>
+        </div>
+        <blockquote>From a miniature underwater landscape on a tabletop to a large outdoor pond with waterfalls, <span>each ecosystem is designed around its surroundings</span> and the way you want to experience it.</blockquote>
+      </div>
+      <div class="pillars">
+        <div class="pillar" style="--c:var(--moss)"><h3>Natural</h3><p>Inspired by real habitats and natural forms.</p></div>
+        <div class="pillar" style="--c:var(--aqua)"><h3>Custom</h3><p>Designed around your space and your vision.</p></div>
+        <div class="pillar" style="--c:var(--gold)"><h3>Living</h3><p>Built to develop, mature and change over time.</p></div>
+      </div>
+    </section>
+
+    <section class="band" id="how">
+      <p class="eyebrow">How it works</p>
+      <h2 class="h2">Nature, engineered to <em>work together.</em></h2>
+      <div class="eco">
+        <svg viewBox="-60 -60 720 720" role="img" aria-label="Six elements of a living ecosystem arranged in a cycle around balance">
+          <circle class="ring2" cx="300" cy="300" r="290"></circle>
+          <circle class="ring" cx="300" cy="300" r="220"></circle>
+          <g id="eco-nodes"></g>
+          <text class="core" x="300" y="304">balance</text>
+          <text class="core-sub" x="300" y="336">ONE LIVING SYSTEM</text>
+        </svg>
+        <ul id="eco-list"></ul>
+      </div>
+      <p class="note">Self-sustaining does not mean maintenance-free. The aim is to design systems that work with natural biological processes and need less intervention.</p>
+    </section>
+
+    <section class="band" id="process">
+      <p class="eyebrow">Our process</p>
+      <h2 class="h2">From idea to <em>living ecosystem.</em></h2>
+      <div class="process">
+        <div class="step"><span class="n">01</span><h3>Consult</h3><p>Your space, vision, lifestyle and budget.</p></div>
+        <div class="step"><span class="n">02</span><h3>Study</h3><p>Light, water, access, surroundings and practical requirements.</p></div>
+        <div class="step"><span class="n">03</span><h3>Design</h3><p>Layout, materials, planting, circulation and the ecosystem concept.</p></div>
+        <div class="step"><span class="n">04</span><h3>Build</h3><p>Construction and installation of the living landscape.</p></div>
+        <div class="step"><span class="n">05</span><h3>Establish</h3><p>Cycling and biological development before final stocking.</p></div>
+        <div class="step"><span class="n">06</span><h3>Guide</h3><p>Handover, care guidance and long-term support.</p></div>
+      </div>
+    </section>
+
+    <div class="marquee" aria-label="Where we build: homes, offices, resorts, restaurants, hotels, farmhouses, gardens and landscape projects">
+      <div class="marquee__row" aria-hidden="true">
+        <span>Homes</span><i>◆</i><span>Offices</span><i>◆</i><span>Resorts</span><i>◆</i><span>Restaurants</span><i>◆</i><span>Hotels</span><i>◆</i><span>Farmhouses</span><i>◆</i><span>Gardens</span><i>◆</i><span>Landscapes</span><i>◆</i>
+        <span>Homes</span><i>◆</i><span>Offices</span><i>◆</i><span>Resorts</span><i>◆</i><span>Restaurants</span><i>◆</i><span>Hotels</span><i>◆</i><span>Farmhouses</span><i>◆</i><span>Gardens</span><i>◆</i><span>Landscapes</span><i>◆</i>
+      </div>
+    </div>
+
+    <section class="band" id="contact">
+      <div class="contact">
+        <div>
+          <p class="eyebrow">Let's create</p>
+          <h2 class="h2">Your own piece <em>of nature.</em></h2>
+          <div class="card">
+            <img src="assets/img/logo.webp" alt="Dexter's Aqua Designs logo" />
+            <div><b>Dexter Ross</b><span>Founder &amp; Aquascape Artist</span></div>
+          </div>
+          <div class="lines">
+            <div class="line"><div><small>Call or WhatsApp</small><a href="tel:+18147093243">814-709-3243</a></div><button class="copy" type="button" data-copy="814-709-3243">Copy</button></div>
+            <div class="line"><div><small>Email</small><a href="mailto:dextersaquadesigns@gmail.com">dextersaquadesigns@gmail.com</a></div><button class="copy" type="button" data-copy="dextersaquadesigns@gmail.com">Copy</button></div>
+            <div class="line"><div><small>Instagram &amp; Facebook</small><a href="https://www.instagram.com/dextersaquadesigns/" target="_blank" rel="noopener">@dextersaquadesigns</a></div><button class="copy" type="button" data-copy="@dextersaquadesigns">Copy</button></div>
+          </div>
+        </div>
+        <form id="enquiry" novalidate>
+          <h3>Start a project</h3>
+          <label for="f-name">Your name<input id="f-name" name="name" autocomplete="name" required /></label>
+          <label for="f-contact">Phone or email<input id="f-contact" name="contact" autocomplete="email" required /></label>
+          <fieldset style="border:0;padding:0;margin:0;display:grid;gap:10px">
+            <legend style="font:500 .66rem var(--f-mono);letter-spacing:.22em;text-transform:uppercase;color:var(--mist);padding:0;margin-bottom:10px">What would you like?</legend>
+            <div class="chips" id="f-kind">
+              <label><input type="checkbox" name="kind" value="Planted aquarium" id="k1"><span>Planted aquarium</span></label>
+              <label><input type="checkbox" name="kind" value="Biotope" id="k2"><span>Biotope</span></label>
+              <label><input type="checkbox" name="kind" value="Paludarium" id="k3"><span>Paludarium</span></label>
+              <label><input type="checkbox" name="kind" value="Terrarium" id="k4"><span>Terrarium</span></label>
+              <label><input type="checkbox" name="kind" value="Waterfall or stream" id="k5"><span>Waterfall or stream</span></label>
+              <label><input type="checkbox" name="kind" value="Pond" id="k6"><span>Pond</span></label>
+              <label><input type="checkbox" name="kind" value="Natural swimming pool" id="k7"><span>Natural pool</span></label>
+            </div>
+          </fieldset>
+          <label for="f-space">Where is it going?
+            <select id="f-space" name="space"><option>Home</option><option>Office</option><option>Restaurant or café</option><option>Hotel or resort</option><option>Garden or farmhouse</option><option>Something else</option></select>
+          </label>
+          <label for="f-msg">Tell us about the space<textarea id="f-msg" name="message" placeholder="Rough size, light, what you imagine…"></textarea></label>
+          <button class="send" type="submit">Send enquiry</button>
+          <p class="formnote" id="f-note" role="status"></p>
+        </form>
+      </div>
+    </section>
+
+    <footer>
+      <div class="f-brand"><img src="assets/img/logo.webp" alt="" />Dexter's Aqua Designs</div>
+      <span>Designing living ecosystems</span>
+      <span>© 2026 Dexter Ross</span>
+    </footer>
+  </div>
+</main>
+
+<script>
+/* ====== THE JOURNEY ======================================================
+   One continuous camera take (scroll-world "architecture A"): each clip starts
+   on the previous clip's last frame. Drop the Gemini/Veo clips into assets/vid/
+   with these names; any clip that is missing falls back to the specimen window.
+   ======================================================================= */
+window.DAD = {
+  sections: [
+    { id:'hero', label:'Arrive', accent:'#5fd3e4', clip:'assets/vid/01-arrive.mp4', clipMobile:'assets/vid/01-arrive-m.mp4', still:'assets/img/01-arrive-poster.jpg', scroll:1.5, linger:.35,
+      portal:'logo', fig:'Dexter’s Aqua Designs',
+      reading:['Designing living ecosystems','Scroll to follow the water'],
+      eyebrow:'Designing living ecosystems', title:'More than an <em>aquarium.</em>',
+      body:'A living, breathing ecosystem, designed around plants, water, rock, wood and the quiet work of microorganisms.',
+      tags:['Aquascapes','Ponds','Natural pools'],
+      sky:{top:'#0d3b3c',bot:'#020a09',ray:'#8fe3ee',water:1,rays:.55} },
+    { id:'aquarium', label:'Aquarium', accent:'#5fd3e4', clip:'assets/vid/02-aquarium.mp4', clipMobile:'assets/vid/02-aquarium-m.mp4', still:'assets/img/02-aquarium-poster.jpg', scroll:1.5, linger:.3,
+      portal:'assets/img/aquarium.jpg', ar:'491/204', fig:'Planted aquarium',
+      reading:['24 °C','pH 6.8','8 h photoperiod'],
+      eyebrow:'Planted aquariums', title:'Underwater <em>landscapes.</em>',
+      body:'Rock formations, driftwood, aquatic plants and carefully chosen fish and shrimp, composed as a landscape rather than a tank.',
+      tags:['Rock & driftwood','Plant selection','Fish & shrimp'],
+      sky:{top:'#136a64',bot:'#03201d',ray:'#b8f3e6',water:1,rays:1} },
+    { id:'biotope', label:'Biotope', accent:'#e7a85a', clip:'assets/vid/03-biotope.mp4', clipMobile:'assets/vid/03-biotope-m.mp4', still:'assets/img/03-biotope-poster.jpg', scroll:1.4, linger:.3,
+      portal:'assets/img/biotope.jpg', ar:'316/179', fig:'Blackwater biotope',
+      reading:['27 °C','pH 5.8','Tannin-stained water'],
+      eyebrow:'Biotope aquariums', title:'Recreating nature, <em>not decorating a tank.</em>',
+      body:'Each biotope follows a real habitat, from forest rivers to rocky streams, with the water, plants and life that belong there.',
+      tags:['South America','Southeast Asia','Africa'],
+      sky:{top:'#7a4d18',bot:'#140a03',ray:'#ffcf8a',water:1,rays:1} },
+    { id:'paludarium', label:'Paludarium', accent:'#9ed36a', clip:'assets/vid/04-paludarium.mp4', clipMobile:'assets/vid/04-paludarium-m.mp4', still:'assets/film_stills/04-rainforest-paludarium.jpg', scroll:1.5, linger:.3,
+      portal:'assets/img/paludarium.jpg', ar:'247/204', fig:'Paludarium',
+      reading:['Humidity 80–90 %','Stream & waterfall','Emergent planting'],
+      eyebrow:'Paludariums', title:'Where land <em>meets water.</em>',
+      body:'Streams, waterfalls, moss and ferns above the waterline, aquatic life below it. A rainforest riverbank in one living display.',
+      tags:['Streams','Moss & ferns','Aquatic life'],
+      sky:{top:'#35573a',bot:'#06120b',ray:'#d9f5b0',water:.55,rays:.75} },
+    { id:'terrarium', label:'Terrarium', accent:'#d2b06a', clip:'assets/vid/05-terrarium.mp4', clipMobile:'assets/vid/05-terrarium-m.mp4', still:'assets/film_stills/05-glass-terrarium.jpg', scroll:1.4, linger:.3,
+      portal:'assets/img/terrarium.jpg', ar:'209/204', w:'min(26vw,340px)', fig:'Closed terrarium',
+      reading:['Closed water cycle','Moss · fern · stone','Humidity 90 %+'],
+      eyebrow:'Terrariums', title:'A miniature world <em>inside glass.</em>',
+      body:'Mosses, ferns, tropical plants, stone and wood grown into a small piece of living forest. Closed or open, jungle or forest floor.',
+      tags:['Closed ecosystems','Open terrariums','Miniature jungles'],
+      sky:{top:'#5a4222',bot:'#0e0905',ray:'#ffd9a0',water:.12,rays:.6} },
+    { id:'waterfall', label:'Waterfall', accent:'#7fd6c2', clip:'assets/vid/06-waterfall.mp4', clipMobile:'assets/vid/06-waterfall-m.mp4', still:'assets/film_stills/06-garden-waterfall.jpg', scroll:1.4, linger:.3,
+      portal:'assets/img/waterfall.jpg', ar:'174/120', w:'min(28vw,340px)', fig:'Garden waterfall',
+      reading:['Natural stone','Planned flow','The sound of water'],
+      eyebrow:'Waterfalls & streams', title:'Bring the sound of <em>nature home.</em>',
+      body:'Boulders, planting and carefully planned water movement, from a small garden waterfall to a long flowing stream.',
+      tags:['Homes & gardens','Resorts & hotels','Restaurants'],
+      sky:{top:'#2c6150',bot:'#051410',ray:'#e6fff2',water:.35,rays:.9} },
+    { id:'pond', label:'Pond', accent:'#6fcf97', clip:'assets/vid/07-pond.mp4', clipMobile:'assets/vid/07-pond-m.mp4', still:'assets/film_stills/07-ecosystem-pond.jpg', scroll:1.4, linger:.3,
+      portal:'assets/img/pond.jpg', ar:'324/179', fig:'Ecosystem pond',
+      reading:['Shallow · marginal · deep zones','Biological filtration','Koi & plants in balance'],
+      eyebrow:'Self-sustaining ponds', title:'Nature on a <em>larger scale.</em>',
+      body:'Aquatic and marginal plants, beneficial microorganisms, gravel and gentle circulation working together so the pond needs less intervention.',
+      tags:['Biological filtration','Marginal plants','Fish'],
+      sky:{top:'#1d5c4c',bot:'#03110d',ray:'#c8f7d8',water:.65,rays:.7} },
+    { id:'pool', label:'Natural Pool', accent:'#f0c27b', clip:'assets/vid/08-pool.mp4', clipMobile:'assets/vid/08-pool-m.mp4', still:'assets/film_stills/08-natural-swimming-pool.jpg', scroll:1.8, linger:.2,
+      portal:'assets/img/pool.jpg', ar:'311/179', fig:'Natural swimming pool',
+      reading:['Swim zone','Regeneration zone','No chlorine'],
+      eyebrow:'Natural swimming pools', title:'Your own piece <em>of nature.</em>',
+      body:'A swimming zone and a planted regeneration zone, linked by biological filtration. Water kept clear by plants, not chemicals.',
+      tags:['Swim zone','Regeneration zone','Planting'],
+      cta:{ primary:{label:'Start your project', href:'#contact'}, secondary:{label:'See how it works', href:'#how'} },
+      sky:{top:'#8a6a3a',bot:'#06201e',ray:'#ffe2a8',water:.5,rays:1} }
+  ]
+};
+</script>
+<script src="scrub-engine.js"></script>
+<script src="aqua.js"></script>
+<!--/BODY-->
+</body>
+</html>
