@@ -76,11 +76,83 @@
     `;
     soundBtn.addEventListener('click', toggleSound);
 
+    // mobile menu button
+    const menuBtn = document.createElement('button');
+    menuBtn.className = 'aq-menu-btn';
+    menuBtn.type = 'button';
+    menuBtn.setAttribute('aria-label', 'Open navigation menu');
+    menuBtn.setAttribute('aria-expanded', 'false');
+    menuBtn.innerHTML = '<span></span><span></span>';
+
     if (cta && cta.parentNode) {
       top.appendChild(rightControls);
       rightControls.appendChild(soundBtn);
       rightControls.appendChild(cta);
+      rightControls.appendChild(menuBtn);
     }
+
+    // mobile menu drawer
+    const mobileMenu = document.createElement('div');
+    mobileMenu.id = 'aq-mobile-menu';
+    mobileMenu.className = 'aq-mobile-menu';
+    mobileMenu.setAttribute('aria-hidden', 'true');
+    mobileMenu.innerHTML = `
+      <div class="aq-mobile-menu__inner">
+        <div class="aq-mobile-menu__header">
+          <div class="sw-brand">
+            <span class="sw-brand__mark"></span>
+            <span class="sw-brand__name">Dexter's Aqua Designs</span>
+          </div>
+          <button class="aq-mobile-close" type="button" aria-label="Close menu">&times;</button>
+        </div>
+        <p class="aq-mobile-menu__eyebrow">The Journey</p>
+        <nav class="aq-mobile-nav">
+          ${S.map((s, i) => `
+            <button class="aq-mobile-nav__item" type="button" data-index="${i}">
+              <span class="num">${String(i + 1).padStart(2, '0')}</span>
+              <span class="label">${s.label}</span>
+              <span class="dot" style="background:${s.accent}"></span>
+            </button>
+          `).join('')}
+        </nav>
+        <div class="aq-mobile-menu__divider"></div>
+        <div class="aq-mobile-links">
+          <a href="#idea">Studio</a>
+          <a href="#how">How It Works</a>
+          <a href="#process">Process</a>
+          <a href="#contact">Contact</a>
+        </div>
+        <div class="aq-mobile-menu__cta">
+          <a class="sw-btn sw-btn--primary" href="#contact">Start a project</a>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(mobileMenu);
+
+    const closeBtn = mobileMenu.querySelector('.aq-mobile-close');
+    function setMobileMenu(open) {
+      mobileMenu.classList.toggle('is-open', open);
+      mobileMenu.setAttribute('aria-hidden', String(!open));
+      menuBtn.setAttribute('aria-expanded', String(open));
+      document.body.style.overflow = open ? 'hidden' : '';
+    }
+    menuBtn.addEventListener('click', () => setMobileMenu(true));
+    closeBtn.addEventListener('click', () => setMobileMenu(false));
+
+    mobileMenu.querySelectorAll('.aq-mobile-nav__item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-index'), 10);
+        setMobileMenu(false);
+        const targetSeg = seg[idx];
+        if (targetSeg) {
+          window.scrollTo({ top: targetSeg.start + (targetSeg.end - targetSeg.start) * 0.5, behavior: reduce ? 'auto' : 'smooth' });
+        }
+      });
+    });
+
+    mobileMenu.querySelectorAll('.aq-mobile-links a, .aq-mobile-menu__cta a').forEach(a => {
+      a.addEventListener('click', () => setMobileMenu(false));
+    });
 
     buildPortals(); layout(); onScroll();
     addEventListener('scroll', onScroll, { passive: true });
@@ -112,6 +184,9 @@
     };
     state.after = clamp((y - D.filmEnd) / innerHeight);   // 1 once the studio pages cover the film
     document.documentElement.classList.toggle('aq-after', state.after > 0.9);
+    document.querySelectorAll('.aq-mobile-nav__item').forEach((btn, idx) => {
+      btn.classList.toggle('is-active', idx === i);
+    });
     updatePortals(y); updateHud(); updateSound();
   }
 
